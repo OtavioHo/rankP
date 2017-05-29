@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block main %}
+	<div class="panel100">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+					<h3 class="panel-title"> {{categorie.name}} </h3>
+			</div>
+			<div class="panel-body">
+				{% for i in items %}
+			    	<div class="media">
+  						<div class="media-left">
+    						<a href="{{ url_for('Items', categorie_id = i.categorie_id, item_id = i.id) }}">
+      							<img class="media-object item-img-categoriespage" src={{ url_for('static', filename=i.img) }} alt="kitten">
+    						</a>
+  						</div>
+  						<div class="media-body">
+    						<a href="{{ url_for('Items', categorie_id = i.categorie_id, item_id = i.id) }}">
+    							<h4 class="media-heading">{{ i.name }}</h4>
+    						</a>
+                            <p>{{ i.description }}</p>
+  						</div>
+					</div>
+				{% endfor %}
+			</div>
+            <div class="panel-footer"><a href="{{ url_for('New') }}">Add a new Item...</a></div>
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block main %}
+	<div class="panel100">
+		<div class="panel panel-default">
+			<div class="panel-heading">
+					<h3 class="panel-title"> Categories</h3>
+			</div>
+			<div class="panel-body panel-allcategorie-page">
+				<ul>
+                    {% for c in categories %}
+                    <li> <h3><a href="{{ url_for('CategoriesPage', categorie_id = c.id) }}">{{ c.name }}</a></h3></li>
+                    {% endfor %}
+                </ul>
+			</div>
+            <div class="panel-footer"><a href="{{ url_for('NewCat') }}">Add a new Categorie...</a></div>
+		</div>
+	</div>
+{% endblock %}

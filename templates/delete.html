@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block  main %}
+    <div class="panel panel-warning panel100">
+        <div class="panel-heading">
+            Are you sure?
+        </div>
+        <div class="panel-body">
+            Are you sure you want to delete item:
+            <ul>
+                <li> {{item.name}} </li>
+            </ul>
+            <div class="flex-box">
+                <form action="{{ url_for('Delete', item_id = item.id) }}" method="POST">
+                    <button class="btn btn-default"> Delete </button>
+                </form>
+                <form action="{{ url_for('Items', categorie_id = item.categorie.id, item_id = item.id) }}">
+                    <button class="btn btn-default"> Cancel </button>
+                </form>
+            <div>
+        </div>
+    </div>
+{% endblock %}

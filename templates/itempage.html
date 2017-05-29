@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block main %}
+	<div class="categories-ls">
+		<div class="panel panel-default">
+		<!-- Default panel contents -->
+			<div class="panel-heading">
+				<h3 class="panel-title">Categories</h3>
+			</div>
+			<!-- List group -->
+			<ul class="list-group">
+				{% for c in categories %}
+					<li class="list-group-item"><a href="{{ url_for('CategoriesPage', categorie_id=c.id) }}"> {{ c.name }}</a></li>
+				{% endfor %}
+			</ul>
+			<div class="panel-footer"><a href="#">More...</a></div>
+		</div>
+	</div>
+	<div class="items-ls">
+		<div class="panel panel-default	">
+			<div class="panel-heading panel-heading-btn">
+		    	<h3 class="panel-title">{{ item.name }}</h3>
+		    	{% if login_session['email'] == item.user.email %}
+                <div> <a href="{{ url_for('Edit', item_id = item.id) }}">edit </a>|<a href="{{ url_for('Delete', item_id = item.id) }}"> delete</a> </div>
+                {% endif %}
+		  	</div>
+		  	<div class="panel-body">
+		    	<div class="media">
+					<div class="media-left">
+      		            <img class="media-object item-page-img" src={{ url_for('static', filename=item.img) }} alt="...">
+					</div>
+					<div class="media-body">
+    					<h4 class="media-heading">{{ item.name }}</h4>
+    					{{ item.description }}
+  					</div>
+				</div>
+				<div class="item-footer">
+					<h5> created by: {{ item.user.username }}</h5><img class="item-footer-pic" src="{{ item.user.picture }}">
+				</div>
+		  	</div>
+		</div>
+	</div>
+{% endblock %}
