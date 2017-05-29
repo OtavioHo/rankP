@@ -1,2 +1,0 @@
-# catalog-app
-Catalog app
