@@ -37,3 +37,10 @@ then navigate to /vagrant
 ## How to run the App
 In the /vagrant folder run the project.py file.
 Go to your browser and access http://localhost:3000
+
+### JSON endpoints
+To access the JSON endpoints:
+ - all categories: http://localhost:3000/catalog/categories/JSON
+ - items form a specific categorie: http://localhost:3000/catalog/[categorie_id]/JSON
+ - all items: http://localhost:3000/catalog/items/JSON
+ - specific item: http://localhost:3000/catalog/items/[item_id]/JSON
