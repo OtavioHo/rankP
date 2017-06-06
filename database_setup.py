@@ -48,6 +48,8 @@ class Item(Base):
 		return {
 			'name': self.name,
 			'description': self.description,
+			'categorie': self.categorie.name,
+			'creator': self.user.username,
 			'id': self.id,
 		}
 

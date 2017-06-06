@@ -390,14 +390,31 @@ def NewCat():
 
 @app.route('/catalog/<int:categorie_id>/JSON')
 def CategoriesItemJSON(categorie_id):
-	categorie = session.query(Categories).filter_by(id = categorie_id).one()
-	items = session.query(Item).filter_by(categorie_id = categorie_id).all()
-	return jsonify(CatecorieItems=[i.serialize for i in items])
+	try:
+		categorie = session.query(Categories).filter_by(id = categorie_id).one()
+		items = session.query(Item).filter_by(categorie_id = categorie_id).all()
+		return jsonify(CatecorieItems=[i.serialize for i in items])
+	except:
+		return 'categorie not found'
 
 @app.route('/catalog/categories/JSON')
 def CategoriesJSON():
 	categories = session.query(Categories).all()
 	return jsonify(Categories=[i.serialize for i in categories])
+
+@app.route('/catalog/items/JSON')
+def ItemsJSON():
+	categories = session.query(Item).all()
+	return jsonify(Items=[i.serialize for i in categories])
+
+@app.route('/catalog/items/<int:item_id>/JSON')
+def ItemJSON(item_id):
+	try:
+		categories = session.query(Item).filter_by(id = item_id).one()
+		return jsonify(Items=categories.serialize)
+	except:
+		return 'item not found'
+
 
 @app.route('/database')
 def Db():
