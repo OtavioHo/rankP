@@ -399,6 +399,10 @@ def CategoriesJSON():
 	categories = session.query(Categories).all()
 	return jsonify(Categories=[i.serialize for i in categories])
 
+@app.route('/database')
+def Db():
+	users = session.query(Users).all()
+	return render_template('database.html', users=users)
 
 if __name__ == '__main__':
 	app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
