@@ -10,6 +10,8 @@ import json, random, string
 from oauth2client.client import flow_from_clientsecrets, FlowExchangeError
 import httplib2
 import requests
+import hmac
+import hashlib
 
 app = Flask(__name__)
 
@@ -122,7 +124,7 @@ def New():
 				filename = secure_filename(file.filename)
 				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 				new_item = Item(name = request.form['name'], description = request.form['description'],
-								img = filename ,categorie_id = int(request.form['categorie']), user_email = login_session['email'])
+								img = filename ,categorie_id = int(request.form['categorie']), user_id = login_session['user_id'])
 				session.add(new_item)
 				session.commit()
 				flash("New Item added")
@@ -135,11 +137,108 @@ def New():
 
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
 
-@app.route('/login')
+# ---- PASSWORD HASH
+def make_salt():
+	return ''.join(random.choice(string.letters) for x in xrange(5))
+
+def make_pw_hash(name, pw, salt = None):
+	if not salt:
+		salt = make_salt()
+	h = hashlib.sha256(name + pw + salt).hexdigest()
+	return '%s|%s' % (h, salt)
+
+def valid_pw(name, pw, h):
+	salt = h.split('|')[1]
+	return h == make_pw_hash(name, pw, salt)
+# ---- PASSWORD HASH
+
+# ---- USERS FUNCTIONS
+def createUser(login_session):
+	new_user = Users(username = login_session['username'], email = login_session['email'],
+					 picture = login_session['picture'])
+	session.add(new_user)
+	session.commit()
+	user = session.query(Users).filter_by(email = login_session['email']).one()
+	return user.id
+
+def getUserInfo(user_id):
+	user = session.query(Users).filter_by(id = user_id).one()
+	return user
+
+def gerUserID(email):
+	try:
+		user = session.query(Users).filter_by(email = email).one()
+		return user.id
+	except:
+		return NoResultFound
+
+
+# ---- USERS FUNCTIONS
+
+@app.route('/signup', methods=['GET', 'POST'])
+def Signup():
+	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+	login_session['state'] = state
+	if request.method == 'GET':
+		return render_template("signup.html", state = state, login_session = login_session)
+	else:
+		username = request.form['username']
+		email = request.form['email']
+		password = request.form['pw']
+		verify = request.form['verify']
+
+		try:
+			exist_email = session.query(Users).filter_by(email = email).one()
+			flash('this email is already in use')
+			return render_template("signup.html", state = state, login_session = login_session)
+		except:
+			if password != verify:
+				flash("Passwords don't match")
+				return render_template("signup.html", state = state, login_session = login_session)
+			else:
+				if email and password:
+					password = make_pw_hash(email, password)
+					new_user = Users(username = username, email = email,
+									 picture = 'https://lh3.googleusercontent.com/-K0bIhug2Qoo/AAAAAAAAAAI/AAAAAAAAAAA/Cg3hXoRNip8/photo.jpg',
+									 password = password)
+					session.add(new_user)
+					session.commit()
+					login_session['username'] = username
+					login_session['picture'] = 'https://lh3.googleusercontent.com/-K0bIhug2Qoo/AAAAAAAAAAI/AAAAAAAAAAA/Cg3hXoRNip8/photo.jpg'
+					login_session['email'] = email
+					login_session['user_id'] = new_user.id
+					return redirect(url_for('Index'))
+				else:
+					flash('You have to fill all inputs')
+					return render_template("signup.html", state = state, login_session = login_session)
+
+@app.route('/login', methods=['GET', 'POST'])
 def Login():
 	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
 	login_session['state'] = state
-	return render_template("login.html", state = state, login_session = login_session)
+	if request.method == 'GET':
+		return render_template("login.html", state = state, login_session = login_session)
+	else:
+		email = request.form['email']
+		password = request.form['pw']
+		if email and password:
+			try:
+				user = session.query(Users).filter_by(email = email).one()
+				if valid_pw(email, password, user.password):
+					login_session['username'] = user.username
+					login_session['picture'] = user.picture
+					login_session['email'] = user.email
+					login_session['user_id'] = user.id
+					return redirect(url_for('Index'))
+				else:
+					flash('Wrong password')
+					return render_template("login.html", state = state, login_session = login_session)
+			except:
+				flash('Wrong email')
+				return render_template("login.html", state = state, login_session = login_session)
+		else:
+			flash('You have to fill all inputs')
+			return render_template("login.html", state = state, login_session = login_session)
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -217,58 +316,67 @@ def gconnect():
 	login_session['picture'] = data['picture']
 	login_session['email'] = data['email']
 
+	#If there is no user with this email, creates a new user
 	try:
-		session.query(Users).filter_by(email = login_session['email']).one()
-	except sqlalchemy.orm.exc.NoResultFound:
-		new_user = Users(username = login_session['username'], email = login_session['email'],
-						 picture = login_session['picture'])
-		session.add(new_user)
+		usr = session.query(Users).filter_by(email = login_session['email']).one()
+		usr.picture = data['picture']
+		usr.username = login_session['username']
 		session.commit()
+		login_session['user_id'] = usr.id
+	except sqlalchemy.orm.exc.NoResultFound:
+		login_session['user_id'] = createUser(login_session)
 
 	output = ''
 	output += '<h1>Welcome, '
 	output += login_session['username']
 	output += '!</h1>'
-	output += '<img src="'
-	output += login_session['picture']
-	output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
 	flash("you are now logged in as %s" % login_session['username'])
 	print "done!"
 	return output
 
 @app.route('/gdisconnect')
 def gdisconnect():
-	access_token = login_session['access_token']
-	print 'In gdisconnect access token is'
-	print access_token
-	print 'User name is: ' 
-	print login_session['username']
-	if access_token is None:
-		print 'Access Token is None'
-		response = make_response(json.dumps('Current user not connected.'), 401)
-		response.headers['Content-Type'] = 'application/json'
-		return response
-	url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
-	print 'url is: %s', url
-	h = httplib2.Http()
-	result = h.request(url, 'GET')[0]
-	print 'result is '
-	print result
-	if result['status'] == '200':
-		del login_session['access_token'] 
-		del login_session['credentials']
-		del login_session['gplus_id']
+
+	try:
+		access_token = login_session['access_token']
+		print 'In gdisconnect access token is'
+		print access_token
+		print 'User name is: ' 
+		print login_session['username']
+		if access_token is None:
+			print 'Access Token is None'
+			response = make_response(json.dumps('Current user not connected.'), 401)
+			response.headers['Content-Type'] = 'application/json'
+			return response
+		url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+		print 'url is: %s', url
+		h = httplib2.Http()
+		result = h.request(url, 'GET')[0]
+		print 'result is '
+		print result
+		if result['status'] == '200':
+			del login_session['access_token'] 
+			del login_session['credentials']
+			del login_session['gplus_id']
+			del login_session['username']
+			del login_session['email']
+			del login_session['picture']
+			response = make_response(json.dumps('Successfully disconnected.'), 200)
+			response.headers['Content-Type'] = 'application/json'
+			return redirect(url_for('Index'))
+		else:
+		
+			response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+			response.headers['Content-Type'] = 'application/json'
+			return response
+
+	except:
+		del login_session['user_id']
 		del login_session['username']
 		del login_session['email']
 		del login_session['picture']
-		response = make_response(json.dumps('Successfully disconnected.'), 200)
-		response.headers['Content-Type'] = 'application/json'
 		return redirect(url_for('Index'))
-	else:
 	
-		response = make_response(json.dumps('Failed to revoke token for given user.', 400))
-		response.headers['Content-Type'] = 'application/json'
-		return response
 
 @app.route('/newcat', methods=['GET', 'POST'])
 def NewCat():

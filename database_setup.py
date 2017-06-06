@@ -8,6 +8,14 @@ from sqlalchemy import create_engine
 
 Base = declarative_base()
 
+class Users(Base):
+	__tablename__ = 'users'
+	id = Column(Integer, primary_key=True)
+	username = Column(String(250))
+	email  = Column(String, nullable = False)
+	picture = Column(String)
+	password = Column(String)
+
 ##
 class Categories(Base):
 	__tablename__ = 'categories'
@@ -22,12 +30,6 @@ class Categories(Base):
 			'id': self.id,
 		}
 
-class Users(Base):
-	__tablename__ = 'users'
-	username = Column(String(250))
-	email  = Column(String, nullable = False, primary_key = True)
-	picture = Column(String)
-
 
 class Item(Base):
 	__tablename__ = 'items'
@@ -38,7 +40,7 @@ class Item(Base):
 	img = Column(String(250))
 	categorie_id = Column(Integer, ForeignKey('categories.id'))
 	categorie = relationship(Categories)
-	user_email = Column(String, ForeignKey('users.email'))
+	user_id = Column(Integer, ForeignKey('users.id'))
 	user = relationship(Users)
 
 	@property

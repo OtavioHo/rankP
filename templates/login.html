@@ -18,20 +18,61 @@
 					<h3 class="panel-title"> Login </h3>
 			</div>
 			<div class="panel-body">
-				<form>
+				<form method="POST">
 					<div class="form-group">
 						<label for="exampleInputEmail1">Email address</label>
-						<input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+						<input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email" name="email">
 					</div>
 					<div class="form-group">
 						<label for="exampleInputPassword1">Password</label>
-						<input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
-					</div>
-					<div class="form-group">
-						<p class="help-block">New user? <a href="#">click here</a></p>
+						<input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password" name="pw">
 					</div>
 
 					<button type="submit" class="btn btn-default">Submit</button>
+
+					<br><br>
+
+					<div id="signInButton">
+				        <span class="g-signin"
+				            data-scope="openid email"
+				            data-clientid="952631978652-mcp2l6mguui0nu0h7bu8fnrc1bqh3v8t.apps.googleusercontent.com"
+				            data-redirecturi="postmessage"
+				            data-accesstype="offline"
+				            data-cookiepolicy="single_host_origin"
+				            data-callback="signInCallback"
+				            data-approvalprompt="force">
+				        </span>
+				        <div id="result"></div>
+	        		</div>
+	        		<script>
+						function signInCallback(authResult) {
+						  if (authResult['code']) {
+						    // Hide the sign-in button now that the user is authorized
+						    $('#signinButton').attr('style', 'display: none');
+						    // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the main restaurants page
+						    $.ajax({
+						      type: 'POST',
+						      url: '/gconnect?state={{ state }}',
+						      processData: false,
+						      data: authResult['code'],
+						      contentType: 'application/octet-stream; charset=utf-8',
+						      success: function(result) {
+						        // Handle or verify the server response if necessary.
+						        if (result) {
+						          $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+						         setTimeout(function() {
+						          window.location.href = "/catalog";
+						         }, 2000);
+						          
+						      } else if (authResult['error']) {
+						    console.log('There was an error: ' + authResult['error']);
+						  } else {
+						        $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+						         }
+						      }
+						      
+						  }); } }
+					</script>
 				</form>
 			</div>
 		</div>
@@ -42,63 +83,7 @@
 					<h3 class="panel-title"> SignUp </h3>
 			</div>
 			<div class="panel-body">
-				<form>
-					<div class="form-group">
-						<label for="exampleInputEmail1">Email address</label>
-						<input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
-					</div>
-					<div class="form-group">
-						<label for="exampleInputPassword1">Password</label>
-						<input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
-					</div>
-					<div class="form-group">
-						<label for="exampleInputPassword1">Check Password</label>
-						<input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
-					</div>
-					<button type="submit" class="btn btn-default">Submit</button>
-				</form>
-				<br>
-				<div id="signInButton">
-			        <span class="g-signin"
-			            data-scope="openid email"
-			            data-clientid="952631978652-mcp2l6mguui0nu0h7bu8fnrc1bqh3v8t.apps.googleusercontent.com"
-			            data-redirecturi="postmessage"
-			            data-accesstype="offline"
-			            data-cookiepolicy="single_host_origin"
-			            data-callback="signInCallback"
-			            data-approvalprompt="force">
-			        </span>
-			        <div id="result"></div>
-        		</div>
-        		<script>
-					function signInCallback(authResult) {
-					  if (authResult['code']) {
-					    // Hide the sign-in button now that the user is authorized
-					    $('#signinButton').attr('style', 'display: none');
-					    // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the main restaurants page
-					    $.ajax({
-					      type: 'POST',
-					      url: '/gconnect?state={{ state }}',
-					      processData: false,
-					      data: authResult['code'],
-					      contentType: 'application/octet-stream; charset=utf-8',
-					      success: function(result) {
-					        // Handle or verify the server response if necessary.
-					        if (result) {
-					          $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
-					         setTimeout(function() {
-					          window.location.href = "/catalog";
-					         }, 2000);
-					          
-					      } else if (authResult['error']) {
-					    console.log('There was an error: ' + authResult['error']);
-					  } else {
-					        $('#result').html('Failed to make a server-side call. Check your configuration and console.');
-					         }
-					      }
-					      
-					  }); } }
-				</script>
+				Do not have an account yet? <a href="{{ url_for('Signup') }}">click here</a>
 			</div>
 		</div>
 	</div>
