@@ -62,9 +62,14 @@ body {
 	min-width: 100px;
 }
 
-.items-ls {
+.items-ls-main {
 	padding-left: 0;
-	width: 80%;
+	width: 100%;
+}
+
+.items-ls {
+    padding-left: 0;
+    width: 80%;
 }
 
 /* Login Page */
@@ -122,14 +127,6 @@ i {
     margin-bottom: 5px;
 }
 
-p {
-    text-overflow: ellipsis;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    width: 600px;
-}
-
 .item-img-categoriespage {
     height: 64px;
     width: 64px;
@@ -153,3 +150,15 @@ p {
     margin-left: 10px;
     border-radius: 15px;
 }
+
+.btn-text {
+    background-color: transparent;
+    border: 0;
+    padding: 0;
+}
+
+.panel-head-float {
+    display: flex;
+    flex-wrap: wrap;
+}
+

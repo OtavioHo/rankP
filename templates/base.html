@@ -3,6 +3,9 @@
 <head>
 	<title>Catalog</title>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="
+	sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" type="text/css" href="/static/style.css">
 </head>
@@ -10,23 +13,33 @@
 <body>
 	<div class="title-banner">
 		<div class="title-content">
-			<a href="{{ url_for('Index') }}"><h1 class="title-text"> Catalog App </h1></a>
+			<a href="{{ url_for('Index') }}"><h1 class="title-text">Papers</h1></a>
 			{% if not login_session['username'] %}
 			<form action="{{ url_for('Login') }}">
 				<button class="login btn"> login </button>
 			</form>
 			{% else %}
-			<form action="{{ url_for('gdisconnect') }}">
-				<button class="login btn"> logout </button>
-			</form>
+			<div class="dropdown">
+					 <button class="btn login dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+						    profile
+						<span class="caret"></span>
+						  </button>
+						  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+						  	<li><a href="#">Edit Profile</a></li>
+						    <li><a href="{{ url_for('gdisconnect') }}">Logout</a></li>
+						    <li role="separator" class="divider"></li>
+						    <li><a href="{{ url_for('New') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Paper</a></li>
+						  </ul>
+				</div>
 			{% endif %}
 		</div>
 	</div>
 	{% if login_session['username'] %}
+		<!-- Login panel
 		<div class="flash-messages">
 			<img class="profile-pic" src="{{ login_session['picture'] }}">
 			<h2> {{ login_session['username'] }}</h2>
-		</div>
+		</div> -->
 	{% endif %}
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -41,32 +54,52 @@
     {% endwith %}
 	<div class="main-content">
 		{% block main %}
-		<div class="categories-ls">
-			<div class="panel panel-default">
-			<!-- Default panel contents -->
-				<div class="panel-heading">
-					<h3 class="panel-title">Categories</h3>
-				</div>
-			<!-- List group -->
-				<ul class="list-group">
-					{% for c in categories %}
-						<li class="list-group-item"><a href="{{ url_for('CategoriesPage', categorie_id=c.id) }}"> {{ c.name }}</a></li>
-					{% endfor %}
-				</ul>
-				<div class="panel-footer"><a href="{{ url_for('AllCategories') }}">More...</a></div>
-			</div>
-		</div>
-		<div class="items-ls">
+		<div class="items-ls-main">
 			<div class="panel panel-default	">
-				<div class="panel-heading">
-			    	<h3 class="panel-title">Recently added Items</h3>
+				<div class="panel-heading panel-heading-btn">
+			    	<h3 class="panel-title">Hot Papers</h3>
+			    	<div class="panel-head-float">
+			    		<div class="dropdown" style="margin-right: 5px;">
+						  <button class="btn-text dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+						    tags
+						    <span class="caret"> </span>
+						  </button>
+						  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+						  	{% for t in tags %}
+						    <li><a href="#">{{ t.name }}</a></li>
+						    {% endfor %}
+						    <li role="separator" class="divider"></li>
+						    <li><a href="#">See all</a></li>
+						  </ul>
+						</div>
+						<span> | </span>
+						<div class="dropdown" style="margin-left: 5px;">
+						  <button class="btn-text dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+						     categories
+						    <span class="caret"></span>
+						  </button>
+						  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+						    <li><a href="#">Action</a></li>
+						    <li><a href="#">Another action</a></li>
+						    <li><a href="#">Something else here</a></li>
+						    <li role="separator" class="divider"></li>
+						    <li><a href="#">Separated link</a></li>
+						  </ul>
+						</div> 
+			    	</div>
+			    </div>
 			  	</div>
 			  	<div class="panel-body">
 			  		{% for i in items %}
 			    	<div class="media">
   						<div class="media-left media-middle">
     						<a href="{{ url_for('Items', categorie_id = i.categorie_id, item_id = i.id) }}">
-      							<img class="media-object main-page-img" src={{url_for('static', filename=i.img)}} alt="kitten">
+    							{% if i.ptype == 'idea' %}
+      							<img class="media-object main-page-img" src={{url_for('static', filename='idea.png')}}>
+      							{% endif %}
+      							{% if i.ptype == 'paper' %}
+      							<img class="media-object main-page-img" src={{url_for('static', filename='article.png')}}>
+      							{% endif %}
     						</a>
   						</div>
   						<div class="media-body">
@@ -74,10 +107,10 @@
     							<h4 class="media-heading">{{ i.name }} <i> ({{ i.categorie.name }}) </i></h4>
     						</a>
   						</div>
+  						<hr>
 					</div>
 					{% endfor %}
 			  	</div>
-			  	<div class="panel-footer"><a href="{{ url_for('New') }}">Add a new Item...</a></div>
 			</div>
 		</div>
 		{% endblock %}

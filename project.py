@@ -3,7 +3,7 @@ from flask import session as login_session
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from database_setup import Base, Item, Categories, Users
+from database_setup import Base, Item, Categories, Users, Upvotes, Tags, TagsItems, Downvotes, Comments
 import os
 from werkzeug.utils import secure_filename
 import json, random, string
@@ -26,9 +26,10 @@ session = DBSession()
 def Index():
 	categories = session.query(Categories).all()
 	recent_items = session.query(Item).order_by(Item.id.desc()).all()
+	tags = session.query(Tags).limit(7).all()
 	if len(recent_items) >= 10:
 		recent_items = recent_items[0:10]
-	return render_template('base.html', categories = categories, items = recent_items, login_session = login_session)
+	return render_template('base.html', categories = categories, items = recent_items, login_session = login_session, tags = tags)
 
 @app.route('/catalog/categories')
 def AllCategories():
@@ -41,11 +42,27 @@ def CategoriesPage(categorie_id):
 	items = session.query(Item).filter_by(categorie_id = categorie_id).all()
 	return render_template('categoriepage.html', categorie = categorie, items = items, login_session = login_session)
 
-@app.route('/catalog/<int:categorie_id>/<int:item_id>')
+@app.route('/teste')
+def Teste():	
+	return jsonify(session.query(Comments).all())
+
+@app.route('/catalog/<int:categorie_id>/<int:item_id>', methods=['GET', 'POST'])
 def Items(categorie_id, item_id):
 	categories = session.query(Categories).all()
 	item = session.query(Item).filter_by(id = item_id).one()
-	return render_template('itempage.html', categories = categories, item = item, login_session = login_session)
+	upvotes = session.query(Upvotes).filter_by(item_id = item_id).all()
+	nUpvotes = len(upvotes)
+	tags = session.query(TagsItems).filter_by(item_id = item_id).all()
+	comments = session.query(Comments).filter_by(item_id = item_id).all()
+	return render_template('itempage.html', categories = categories, item = item, login_session = login_session, upvotes = nUpvotes, tags = tags, item_id = item_id, categorie_id = categorie_id, comments = comments)
+
+@app.route('/comment/<int:categorie_id>/<int:item_id>', methods=['POST'])
+def AddComment(categorie_id, item_id):
+	user = session.query(Users).filter_by(id = login_session['user_id']).one()
+	comment = Comments(item_id = item_id, content = request.form["content"], academic = user.academic)
+	session.add(comment)
+	session.commit()
+	return redirect(url_for('Items', categorie_id = categorie_id, item_id = item_id))
 
 @app.route('/catalog/<int:item_id>/edit', methods=['GET', 'POST'])
 def Edit(item_id):
@@ -110,21 +127,13 @@ def New():
 			else:
 				if not request.form['name']:
 					warnings.append('You must give your item a name')
-				# check if the post request has the file part
-				file = request.files['file']
-				# if user does not select file, browser also
-				# submit a empty part without filename
-				if file.filename == '':
-					warnings.append('No selected file')
-				if file and not allowed_file(file.filename):
-					warnings.append('This fileis not allowed')
 				if warnings:
 					return render_template('new.html', categories = categories, warnings = warnings, login_session = login_session)
 
-				filename = secure_filename(file.filename)
-				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 				new_item = Item(name = request.form['name'], description = request.form['description'],
-								img = filename ,categorie_id = int(request.form['categorie']), user_id = login_session['user_id'])
+								categorie_id = int(request.form['categorie']), user_id = login_session['user_id'],
+								author = request.form['author'], pub_year = int(request.form['pub_year']), ptype = request.form['type'],
+								link = request.form['link'])
 				session.add(new_item)
 				session.commit()
 				flash("New Item added")
@@ -200,7 +209,7 @@ def Signup():
 					password = make_pw_hash(email, password)
 					new_user = Users(username = username, email = email,
 									 picture = 'https://lh3.googleusercontent.com/-K0bIhug2Qoo/AAAAAAAAAAI/AAAAAAAAAAA/Cg3hXoRNip8/photo.jpg',
-									 password = password)
+									 password = password, academic = False)
 					session.add(new_user)
 					session.commit()
 					login_session['username'] = username
@@ -377,7 +386,6 @@ def gdisconnect():
 		del login_session['picture']
 		return redirect(url_for('Index'))
 	
-
 @app.route('/newcat', methods=['GET', 'POST'])
 def NewCat():
 	if request.method == 'POST':
@@ -387,6 +395,42 @@ def NewCat():
 		return redirect(url_for('Index'))
 	else:
 		return render_template('newcat.html', login_session = login_session)
+
+@app.route('/newtag', methods=['GET', 'POST'])
+def NewTag():
+	if request.method == 'POST':
+		new_tag = Tags(name = request.form['name'])
+		session.add(new_tag)
+		session.commit()
+		return redirect(url_for('Index'))
+	else:
+		return render_template('newtag.html', login_session = login_session)
+
+@app.route('/upvote/<int:categorie_id>/<int:item_id>')
+def Up(categorie_id, item_id):
+	if login_session['user_id']:
+		alreadyup = session.query(Upvotes).filter_by(user_id = login_session['user_id'], item_id = item_id).all()
+		if(not alreadyup):
+			upvote = Upvotes(item_id = item_id, user_id = login_session['user_id'])
+			session.add(upvote)
+			session.commit()
+			return redirect(url_for('Items', categorie_id = categorie_id, item_id = item_id))
+	else: 
+		flash("You must be logged in")
+		return redirect(url_for('Items', categorie_id = categorie_id, item_id = item_id))
+	return redirect(url_for('Items', categorie_id = categorie_id, item_id = item_id))
+
+@app.route('/addcat/<int:categorie_id>/<int:item_id>', methods=['GET', 'POST'])
+def AddTag(categorie_id, item_id):
+	tags = session.query(Tags).all()
+	if request.method == 'POST':
+		tags_id = request.form['tags']
+		new_ti = TagsItems(item_id = item_id, tags_id = tags_id)
+		session.add(new_ti)
+		session.commit()
+		return redirect(url_for('Items', categorie_id = categorie_id, item_id = item_id))
+	else:
+		return render_template('addtag.html', login_session = login_session, tags = tags, item_id = item_id, categorie_id = categorie_id)
 
 @app.route('/catalog/<int:categorie_id>/JSON')
 def CategoriesItemJSON(categorie_id):
