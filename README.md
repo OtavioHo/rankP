@@ -1,10 +1,6 @@
 # rankP
 rankP
 
-## Descrição
-This project works with a database (PostgreSQL) and with the flask framework for python to create an catalog app.
-The project contain a own authorization system and a third-party one (Google+).
-
 ## Resumo
 O presente projeto de site/comunidade de leitores tem por objetivo avaliar o impacto de artigos cientificos por meio  de  dinâmicas  de redes sociais inspiradas no reddit e no Hack news. Os artigos seram listados de acordo com o impacto que será medido de  acordo com os upvotes e down votes dos artigos, que seram propostos para discussão pelos usuários, as discussões da comunidade do site, que seram validadas por meio desses upvotes e downvotes. O fatores de impactos serão quantificados e separados em julgamentos positivos, julgamentos negativos, comentários sobre erros, upvotes e downvotes e compartilhamentos da discussão. A partir dessa metodologia será possível dar enfase as pesquisas de impacto relativo a comunidade que os lê, de maneira a ser uma forma altenartiva de verificar a qualidade dos artigos, distribuir recursos e aproveitar o potencial da competitividade da pesquisa na faculdade.  Além disso o site é aberto e gratuito para qualquer pessoa interessada nas pesquisas discutidas, inclusive investidores. O  Banco de dados também tem potencia para medir os impactos de instituições, autores  e etc. AQUI NÃO SERAM COMPARTILHADOS OS ARTIGOS PROPIAMENTE DITOS.
 
