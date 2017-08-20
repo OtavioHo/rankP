@@ -1,7 +1,7 @@
 import os
 import sys
 import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, TIMESTAMP, UniqueConstraint, Boolean
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, TIMESTAMP, UniqueConstraint, Boolean, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
@@ -46,6 +46,8 @@ class Item(Base):
 	pub_year = Column(Integer)
 	ptype = Column(Integer)
 	link = Column(String(250))
+	hot_score = Column(Float)
+	date = Column(Integer)
 
 	@property
 	def serialize(self):

@@ -13,7 +13,11 @@
 <body>
 	<div class="title-banner">
 		<div class="title-content">
-			<a href="{{ url_for('Index') }}"><h1 class="title-text">Papers</h1></a>
+			<a href="{{ url_for('Index') }}"><h1 class="title-text">rankP</h1></a>
+			<div class="input-group" style="width: 25%; margin-top: 10px;">
+				  <span class="input-group-addon" id="basic-addon1"><span class="glyphicon glyphicon-search"></span></span>
+				  <input type="text" class="form-control" placeholder="search..." aria-describedby="basic-addon1">
+			</div>
 			{% if not login_session['username'] %}
 			<form action="{{ url_for('Login') }}">
 				<button class="login btn"> login </button>
@@ -25,7 +29,7 @@
 						<span class="caret"></span>
 						  </button>
 						  <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
-						  	<li><a href="#">Edit Profile</a></li>
+						  	<li><a href="{{ url_for('EditProfile') }}">Edit Profile</a></li>
 						    <li><a href="{{ url_for('gdisconnect') }}">Logout</a></li>
 						    <li role="separator" class="divider"></li>
 						    <li><a href="{{ url_for('New') }}"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> New Paper</a></li>

@@ -12,6 +12,8 @@ import httplib2
 import requests
 import hmac
 import hashlib
+import time
+import math
 
 app = Flask(__name__)
 
@@ -21,15 +23,52 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
+###Sort Functions ###
+
+def date():
+	return int(round(time.time() * 1000))
+
+def score(ups, downs):
+	return ups - downs
+
+def hot(ups, downs, date):
+	s = score(ups, downs)
+	#order = math.log10(max(abs(s),1))
+	if s > 0:
+		sign = 1
+	elif s < 0:
+		sign = -1
+	else:
+		sign = 0	
+
+	seconds = int(date) - 1134028003
+	return (sign * s*1000 + seconds /  45000)
+
+######
+
 @app.route('/')
 @app.route('/catalog')
 def Index():
 	categories = session.query(Categories).all()
-	recent_items = session.query(Item).order_by(Item.id.desc()).all()
+	recent_items = session.query(Item).order_by(Item.hot_score.desc()).all()
 	tags = session.query(Tags).limit(7).all()
 	if len(recent_items) >= 10:
 		recent_items = recent_items[0:10]
 	return render_template('base.html', categories = categories, items = recent_items, login_session = login_session, tags = tags)
+
+@app.route('/editprofile')
+def EditProfile():
+	user = session.query(Users).filter_by(id = login_session['user_id']).one()
+	return render_template('editprofile.html', login_session = login_session,  academic = user.academic)
+
+@app.route('/academic')
+def Academic():
+	user = session.query(Users).filter_by(id = login_session['user_id']).one()
+	user.academic = True
+	session.add(user)
+	session.commit()
+	return redirect(url_for('Index'))
 
 @app.route('/catalog/categories')
 def AllCategories():
@@ -130,10 +169,11 @@ def New():
 				if warnings:
 					return render_template('new.html', categories = categories, warnings = warnings, login_session = login_session)
 
+				hot_score = hot(0,0, date())
 				new_item = Item(name = request.form['name'], description = request.form['description'],
 								categorie_id = int(request.form['categorie']), user_id = login_session['user_id'],
 								author = request.form['author'], pub_year = int(request.form['pub_year']), ptype = request.form['type'],
-								link = request.form['link'])
+								link = request.form['link'], hot_score = hot_score, date = date())
 				session.add(new_item)
 				session.commit()
 				flash("New Item added")
@@ -411,8 +451,14 @@ def Up(categorie_id, item_id):
 	if login_session['user_id']:
 		alreadyup = session.query(Upvotes).filter_by(user_id = login_session['user_id'], item_id = item_id).all()
 		if(not alreadyup):
+			item = session.query(Item).filter_by(id = item_id).one()
 			upvote = Upvotes(item_id = item_id, user_id = login_session['user_id'])
 			session.add(upvote)
+			session.commit()
+			nUpvotes = len(session.query(Upvotes).filter_by(item_id = item_id).all())
+			hot_score = hot(nUpvotes, 0, int(item.date))
+			item.hot_score = hot_score
+			session.add(item)
 			session.commit()
 			return redirect(url_for('Items', categorie_id = categorie_id, item_id = item_id))
 	else: 

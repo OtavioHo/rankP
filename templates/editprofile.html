@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block main %}
+	<div class="items-ls" style="width: 100%;">
+		<div class="panel panel-default	">
+			<div class="panel-heading panel-heading-btn">
+		    	<h3 class="panel-title">Edit Profile</h3>
+		  	</div>
+		  	<div class="panel-body">
+		  	{% if not academic %}
+		  		<div>
+		  			<a href="{{ url_for('Academic') }}"><button class="btn"> Make me Academic </button></a>
+		  		</div>
+		  	</div>
+		  	{% else %}
+		  	You are academic
+		  	{% endif %}
+
+		</div>
+	</div>
+
+{% endblock %}
